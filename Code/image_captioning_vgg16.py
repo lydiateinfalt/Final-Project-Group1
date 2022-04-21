@@ -74,10 +74,17 @@ import os
 import time
 import json
 from PIL import Image
+import tensorflow_text
+import googletrans
+from googletrans import Translator
+# os.system("sudo pip install 'tensorflow-text==2.8.*'")
+os.system("sudo pip install googletrans==3.1.0a0")
 
 """## Download and prepare the MS-COCO dataset
 
-You will use the [MS-COCO dataset](http://cocodataset.org/#home) to train your model. The dataset contains over 82,000 images, each of which has at least 5 different caption annotations. The code below downloads and extracts the dataset automatically.
+You will use the [MS-COCO dataset](http://cocodataset.org/#home) to train your model. 
+The dataset contains over 82,000 images, each of which has at least 5 different caption annotations. 
+The code below downloads and extracts the dataset automatically.
 
 **Caution: large download ahead**. You'll use the training set, which is a 13GB file.
 """
@@ -135,17 +142,19 @@ for image_path in train_image_paths:
   train_captions.extend(caption_list)
   img_name_vector.extend([image_path] * len(caption_list))
 
+print(train_captions[0])
+Image.open(img_name_vector[0])
+
 #Added this to plot examples from the dataset
-fig = plt.figure(figsize=(8,8))
-i = 1
-for j in range(6):
-  n = np.random.randint(0, len(img_name_vector))
-  ax1 = fig.add_subplot(2,3,i)
-  plt.imshow(Image.open(img_name_vector[n]))
-  print(train_captions[n])
-  i += 1
-plt.tight_layout()
-plt.show()
+# fig = plt.figure(figsize=(8,8))
+# i = 1
+# for j in range(6):
+#   n = np.random.randint(0, len(img_name_vector))
+#   ax1 = fig.add_subplot(2,3,i)
+#   plt.imshow(Image.open(img_name_vector[n]))
+#   print(train_captions[n])
+#   i += 1
+# plt.show()
 
 """## Preprocess the images using InceptionV3
 Next, you will use VGG16 (which is pretrained on Imagenet) to classify each image. You will extract features from the last convolutional layer.
@@ -482,7 +491,7 @@ def train_step(img_tensor, target):
 
   return loss, total_loss
 
-EPOCHS = 25
+EPOCHS = 30
 
 for epoch in range(start_epoch, EPOCHS):
     start = time.time()
@@ -551,7 +560,6 @@ def evaluate(image):
 
     attention_plot = attention_plot[:len(result), :]
     return result, attention_plot
-
 def plot_attention(image, result, attention_plot):
     temp_image = np.array(Image.open(image))
 
@@ -585,18 +593,21 @@ plot_attention(image, result, attention_plot)
 For fun, below you're provided a method you can use to caption your own images with the model you've just trained. Keep in mind, it was trained on a relatively small amount of data, and your images may be different from the training data (so be prepared for weird results!)
 
 """
-
-image_url = 'https://tensorflow.org/images/surf.jpg'
+translator = Translator()
+image_url = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/691.jpg'
 image_extension = image_url[-4:]
 image_path = tf.keras.utils.get_file('image'+image_extension, origin=image_url)
 
 result, attention_plot = evaluate(image_path)
 print('Prediction Caption:', ' '.join(result))
 plot_attention(image_path, result, attention_plot)
+sentence = " ".join(result)
+print('Prediction Caption:', ' '.join(result))
+translated_captions = translator.translate(sentence, dest='de')
+print(sentence, ' -> ', translated_captions.text)
 # opening the image
 Image.open(image_path)
 
-"""# Next steps
 
-Congrats! You've just trained an image captioning model with attention. Next, take a look at this example [Neural Machine Translation with Attention](https://www.tensorflow.org/text/tutorials/nmt_with_attention). It uses a similar architecture to translate between Spanish and English sentences. You can also experiment with training the code in this notebook on a different dataset.
-"""
+
+
