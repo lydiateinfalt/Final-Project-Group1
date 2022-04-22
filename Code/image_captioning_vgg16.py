@@ -65,8 +65,8 @@ import tensorflow as tf
 
 # You'll generate plots of attention in order to see which parts of an image
 # your model focuses on during captioning
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
 import collections
 import random
 import numpy as np
@@ -75,10 +75,12 @@ import time
 import json
 from PIL import Image
 import tensorflow_text
-import googletrans
 from googletrans import Translator
 # os.system("sudo pip install 'tensorflow-text==2.8.*'")
-os.system("sudo pip install googletrans==3.1.0a0")
+# os.system("sudo pip install googletrans==3.1.0a0")
+
+translator = Translator()
+translated_caption = ""
 
 """## Download and prepare the MS-COCO dataset
 
@@ -91,25 +93,25 @@ The code below downloads and extracts the dataset automatically.
 
 # Download caption annotation files
 annotation_folder = '/annotations/'
-if not os.path.exists(os.path.abspath('.') + annotation_folder):
-  annotation_zip = tf.keras.utils.get_file('captions.zip',
-                                           cache_subdir=os.path.abspath('.'),
-                                           origin='http://images.cocodataset.org/annotations/annotations_trainval2014.zip',
-                                           extract=True)
-  annotation_file = os.path.dirname(annotation_zip)+'/annotations/captions_train2014.json'
-  os.remove(annotation_zip)
+if os.path.exists(os.path.abspath('.') + annotation_folder):
+    annotation_zip = tf.keras.utils.get_file('captions.zip',
+                                             cache_subdir=os.path.abspath('.'),
+                                             origin='http://images.cocodataset.org/annotations/annotations_trainval2014.zip',
+                                             extract=True)
+    annotation_file = os.path.dirname(annotation_zip) + '/annotations/captions_train2014.json'
+    os.remove(annotation_zip)
 
 # Download image files
 image_folder = '/train2014/'
 if not os.path.exists(os.path.abspath('.') + image_folder):
-  image_zip = tf.keras.utils.get_file('train2014.zip',
-                                      cache_subdir=os.path.abspath('.'),
-                                      origin='http://images.cocodataset.org/zips/train2014.zip',
-                                      extract=True)
-  PATH = os.path.dirname(image_zip) + image_folder
-  os.remove(image_zip)
+    image_zip = tf.keras.utils.get_file('train2014.zip',
+                                        cache_subdir=os.path.abspath('.'),
+                                        origin='http://images.cocodataset.org/zips/train2014.zip',
+                                        extract=True)
+    PATH = os.path.dirname(image_zip) + image_folder
+    os.remove(image_zip)
 else:
-  PATH = os.path.abspath('.') + image_folder
+    PATH = os.path.abspath('.') + image_folder
 
 """## Optional: limit the size of the training set 
 To speed up training for this tutorial, you'll use a subset of 30,000 captions and their corresponding images to train your model. Choosing to use more data would result in improved captioning quality.
@@ -121,40 +123,40 @@ with open(annotation_file, 'r') as f:
 # Group all captions together having the same image ID.
 image_path_to_caption = collections.defaultdict(list)
 for val in annotations['annotations']:
-  caption = f"<start> {val['caption']} <end>"
-  image_path = PATH + 'COCO_train2014_' + '%012d.jpg' % (val['image_id'])
-  image_path_to_caption[image_path].append(caption)
+    caption = f"<start> {val['caption']} <end>"
+    image_path = PATH + 'COCO_train2014_' + '%012d.jpg' % (val['image_id'])
+    image_path_to_caption[image_path].append(caption)
 
 image_paths = list(image_path_to_caption.keys())
 random.shuffle(image_paths)
 
-# Select the first 6000 image_paths from the shuffled set.
+# Select the first 10000 image_paths from the shuffled set.
 # Approximately each image id has 5 captions associated with it, so that will
 # lead to 30,000 examples.
-train_image_paths = image_paths[:6000]
+train_image_paths = image_paths[:10000]
 print(len(train_image_paths))
 
 train_captions = []
 img_name_vector = []
 
 for image_path in train_image_paths:
-  caption_list = image_path_to_caption[image_path]
-  train_captions.extend(caption_list)
-  img_name_vector.extend([image_path] * len(caption_list))
+    caption_list = image_path_to_caption[image_path]
+    train_captions.extend(caption_list)
+    img_name_vector.extend([image_path] * len(caption_list))
 
 print(train_captions[0])
 Image.open(img_name_vector[0])
 
-#Added this to plot examples from the dataset
+# Added this to plot examples from the dataset
 # fig = plt.figure(figsize=(8,8))
 # i = 1
 # for j in range(6):
-#   n = np.random.randint(0, len(img_name_vector))
+#   n = np.random.randint(0, 100)
 #   ax1 = fig.add_subplot(2,3,i)
 #   plt.imshow(Image.open(img_name_vector[n]))
 #   print(train_captions[n])
 #   i += 1
-# plt.show()
+#   plt.savefig("output/sample_data.pdf")
 
 """## Preprocess the images using InceptionV3
 Next, you will use VGG16 (which is pretrained on Imagenet) to classify each image. You will extract features from the last convolutional layer.
@@ -162,12 +164,14 @@ Next, you will use VGG16 (which is pretrained on Imagenet) to classify each imag
 * [Preprocess the images](https://cloud.google.com/tpu/docs/inception-v3-advanced#preprocessing_stage) using the [preprocess_input](https://www.tensorflow.org/api_docs/python/tf/keras/applications/inception_v3/preprocess_input) method to normalize the image so that it contains pixels in the range of -1 to 1, which matches the format of the images used to train InceptionV3.
 """
 
+
 def load_image(image_path):
     img = tf.io.read_file(image_path)
     img = tf.io.decode_jpeg(img, channels=3)
     img = tf.keras.layers.Resizing(224, 224)(img)
     img = tf.keras.applications.vgg16.preprocess_input(img)
     return img, image_path
+
 
 """## Initialize InceptionV3 and load the pretrained Imagenet weights
 
@@ -180,7 +184,7 @@ You use the last convolutional layer because you are using attention in this exa
 """
 
 image_model = tf.keras.applications.VGG16(include_top=False,
-                                                weights='imagenet')
+                                          weights='imagenet')
 new_input = image_model.input
 hidden_layer = image_model.layers[-1].output
 
@@ -202,16 +206,16 @@ encode_train = sorted(set(img_name_vector))
 # Feel free to change batch_size according to your system configuration
 image_dataset = tf.data.Dataset.from_tensor_slices(encode_train)
 image_dataset = image_dataset.map(
-  load_image, num_parallel_calls=tf.data.AUTOTUNE).batch(16)
+    load_image, num_parallel_calls=tf.data.AUTOTUNE).batch(16)
 
 for img, path in image_dataset:
-  batch_features = image_features_extract_model(img)
-  batch_features = tf.reshape(batch_features,
-                              (batch_features.shape[0], -1, batch_features.shape[3]))
+    batch_features = image_features_extract_model(img)
+    batch_features = tf.reshape(batch_features,
+                                (batch_features.shape[0], -1, batch_features.shape[3]))
 
-  for bf, p in zip(batch_features, path):
-    path_of_feature = p.numpy().decode("utf-8")
-    np.save(path_of_feature, bf.numpy())
+    for bf, p in zip(batch_features, path):
+        path_of_feature = p.numpy().decode("utf-8")
+        np.save(path_of_feature, bf.numpy())
 
 """## Preprocess and tokenize the captions
 
@@ -224,12 +228,14 @@ You will transform the text captions into integer sequences using the [TextVecto
 
 caption_dataset = tf.data.Dataset.from_tensor_slices(train_captions)
 
+
 # We will override the default standardization of TextVectorization to preserve
 # "<>" characters, so we preserve the tokens for the <start> and <end>.
 def standardize(inputs):
-  inputs = tf.strings.lower(inputs)
-  return tf.strings.regex_replace(inputs,
-                                  r"!\"#$%&\(\)\*\+.,-/:;=?@\[\\\]^_`{|}~", "")
+    # inputs = tf.strings.lower(inputs, encoding='utf-8')
+    return tf.strings.regex_replace(inputs,
+                                    r"!\"#$%&\(\)\*\+.,-/:;=?@\[\\\]^_`{|}~", "")
+
 
 # Max word count for a caption.
 max_length = 50
@@ -258,30 +264,30 @@ index_to_word = tf.keras.layers.StringLookup(
 
 img_to_cap_vector = collections.defaultdict(list)
 for img, cap in zip(img_name_vector, cap_vector):
-  img_to_cap_vector[img].append(cap)
+    img_to_cap_vector[img].append(cap)
 
 # Changed to 80-20 Train - Test Split. Create training and validation sets using an 70-30 split randomly.
 img_keys = list(img_to_cap_vector.keys())
 random.shuffle(img_keys)
 
-slice_index = int(len(img_keys)*0.8)
+slice_index = int(len(img_keys) * 0.8)
 img_name_train_keys, img_name_val_keys = img_keys[:slice_index], img_keys[slice_index:]
 
 img_name_train = []
 cap_train = []
 for imgt in img_name_train_keys:
-  capt_len = len(img_to_cap_vector[imgt])
-  img_name_train.extend([imgt] * capt_len)
-  cap_train.extend(img_to_cap_vector[imgt])
+    capt_len = len(img_to_cap_vector[imgt])
+    img_name_train.extend([imgt] * capt_len)
+    cap_train.extend(img_to_cap_vector[imgt])
 
 img_name_val = []
 cap_val = []
 for imgv in img_name_val_keys:
-  capv_len = len(img_to_cap_vector[imgv])
-  img_name_val.extend([imgv] * capv_len)
-  cap_val.extend(img_to_cap_vector[imgv])
+    capv_len = len(img_to_cap_vector[imgv])
+    img_name_val.extend([imgv] * capv_len)
+    cap_val.extend(img_to_cap_vector[imgv])
 
-#Added print statement to get lengths
+# Added print statement to get lengths
 print(f'train images = {len(img_name_train)}, test images {len(img_name_val)}')
 
 """## Create a tf.data dataset for training
@@ -300,17 +306,19 @@ num_steps = len(img_name_train) // BATCH_SIZE
 features_shape = 512
 attention_features_shape = 49
 
+
 # Load the numpy files
 def map_func(img_name, cap):
-  img_tensor = np.load(img_name.decode('utf-8')+'.npy')
-  return img_tensor, cap
+    img_tensor = np.load(img_name.decode('utf-8') + '.npy')
+    return img_tensor, cap
+
 
 dataset = tf.data.Dataset.from_tensor_slices((img_name_train, cap_train))
 
 # Use map to load the numpy files in parallel
 dataset = dataset.map(lambda item1, item2: tf.numpy_function(
-          map_func, [item1, item2], [tf.float32, tf.int64]),
-          num_parallel_calls=tf.data.AUTOTUNE)
+    map_func, [item1, item2], [tf.float32, tf.int64]),
+                      num_parallel_calls=tf.data.AUTOTUNE)
 
 # Shuffle and batch
 dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
@@ -326,36 +334,38 @@ The model architecture is inspired by the [Show, Attend and Tell](https://arxiv.
 * The RNN (here GRU) attends over the image to predict the next word.
 """
 
+
 class BahdanauAttention(tf.keras.Model):
-  def __init__(self, units):
-    super(BahdanauAttention, self).__init__()
-    self.W1 = tf.keras.layers.Dense(units)
-    self.W2 = tf.keras.layers.Dense(units)
-    self.V = tf.keras.layers.Dense(1)
+    def __init__(self, units):
+        super(BahdanauAttention, self).__init__()
+        self.W1 = tf.keras.layers.Dense(units)
+        self.W2 = tf.keras.layers.Dense(units)
+        self.V = tf.keras.layers.Dense(1)
 
-  def call(self, features, hidden):
-    # features(CNN_encoder output) shape == (batch_size, 64, embedding_dim)
+    def call(self, features, hidden):
+        # features(CNN_encoder output) shape == (batch_size, 64, embedding_dim)
 
-    # hidden shape == (batch_size, hidden_size)
-    # hidden_with_time_axis shape == (batch_size, 1, hidden_size)
-    hidden_with_time_axis = tf.expand_dims(hidden, 1)
+        # hidden shape == (batch_size, hidden_size)
+        # hidden_with_time_axis shape == (batch_size, 1, hidden_size)
+        hidden_with_time_axis = tf.expand_dims(hidden, 1)
 
-    # attention_hidden_layer shape == (batch_size, 64, units)
-    attention_hidden_layer = (tf.nn.tanh(self.W1(features) +
-                                         self.W2(hidden_with_time_axis)))
+        # attention_hidden_layer shape == (batch_size, 64, units)
+        attention_hidden_layer = (tf.nn.tanh(self.W1(features) +
+                                             self.W2(hidden_with_time_axis)))
 
-    # score shape == (batch_size, 64, 1)
-    # This gives you an unnormalized score for each image feature.
-    score = self.V(attention_hidden_layer)
+        # score shape == (batch_size, 64, 1)
+        # This gives you an unnormalized score for each image feature.
+        score = self.V(attention_hidden_layer)
 
-    # attention_weights shape == (batch_size, 64, 1)
-    attention_weights = tf.nn.softmax(score, axis=1)
+        # attention_weights shape == (batch_size, 64, 1)
+        attention_weights = tf.nn.softmax(score, axis=1)
 
-    # context_vector shape after sum == (batch_size, hidden_size)
-    context_vector = attention_weights * features
-    context_vector = tf.reduce_sum(context_vector, axis=1)
+        # context_vector shape after sum == (batch_size, hidden_size)
+        context_vector = attention_weights * features
+        context_vector = tf.reduce_sum(context_vector, axis=1)
 
-    return context_vector, attention_weights
+        return context_vector, attention_weights
+
 
 class CNN_Encoder(tf.keras.Model):
     # Since you have already extracted the features and dumped it
@@ -370,47 +380,49 @@ class CNN_Encoder(tf.keras.Model):
         x = tf.nn.relu(x)
         return x
 
+
 class RNN_Decoder(tf.keras.Model):
-  def __init__(self, embedding_dim, units, vocab_size):
-    super(RNN_Decoder, self).__init__()
-    self.units = units
+    def __init__(self, embedding_dim, units, vocab_size):
+        super(RNN_Decoder, self).__init__()
+        self.units = units
 
-    self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
-    self.gru = tf.keras.layers.GRU(self.units,
-                                   return_sequences=True,
-                                   return_state=True,
-                                   recurrent_initializer='glorot_uniform')
-    self.fc1 = tf.keras.layers.Dense(self.units)
-    self.fc2 = tf.keras.layers.Dense(vocab_size)
+        self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
+        self.gru = tf.keras.layers.GRU(self.units,
+                                       return_sequences=True,
+                                       return_state=True,
+                                       recurrent_initializer='glorot_uniform')
+        self.fc1 = tf.keras.layers.Dense(self.units)
+        self.fc2 = tf.keras.layers.Dense(vocab_size)
 
-    self.attention = BahdanauAttention(self.units)
+        self.attention = BahdanauAttention(self.units)
 
-  def call(self, x, features, hidden):
-    # defining attention as a separate model
-    context_vector, attention_weights = self.attention(features, hidden)
+    def call(self, x, features, hidden):
+        # defining attention as a separate model
+        context_vector, attention_weights = self.attention(features, hidden)
 
-    # x shape after passing through embedding == (batch_size, 1, embedding_dim)
-    x = self.embedding(x)
+        # x shape after passing through embedding == (batch_size, 1, embedding_dim)
+        x = self.embedding(x)
 
-    # x shape after concatenation == (batch_size, 1, embedding_dim + hidden_size)
-    x = tf.concat([tf.expand_dims(context_vector, 1), x], axis=-1)
+        # x shape after concatenation == (batch_size, 1, embedding_dim + hidden_size)
+        x = tf.concat([tf.expand_dims(context_vector, 1), x], axis=-1)
 
-    # passing the concatenated vector to the GRU
-    output, state = self.gru(x)
+        # passing the concatenated vector to the GRU
+        output, state = self.gru(x)
 
-    # shape == (batch_size, max_length, hidden_size)
-    x = self.fc1(output)
+        # shape == (batch_size, max_length, hidden_size)
+        x = self.fc1(output)
 
-    # x shape == (batch_size * max_length, hidden_size)
-    x = tf.reshape(x, (-1, x.shape[2]))
+        # x shape == (batch_size * max_length, hidden_size)
+        x = tf.reshape(x, (-1, x.shape[2]))
 
-    # output shape == (batch_size * max_length, vocab)
-    x = self.fc2(x)
+        # output shape == (batch_size * max_length, vocab)
+        x = self.fc2(x)
 
-    return x, state, attention_weights
+        return x, state, attention_weights
 
-  def reset_state(self, batch_size):
-    return tf.zeros((batch_size, self.units))
+    def reset_state(self, batch_size):
+        return tf.zeros((batch_size, self.units))
+
 
 encoder = CNN_Encoder(embedding_dim)
 decoder = RNN_Decoder(embedding_dim, units, tokenizer.vocabulary_size())
@@ -421,13 +433,14 @@ loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
 
 
 def loss_function(real, pred):
-  mask = tf.math.logical_not(tf.math.equal(real, 0))
-  loss_ = loss_object(real, pred)
+    mask = tf.math.logical_not(tf.math.equal(real, 0))
+    loss_ = loss_object(real, pred)
 
-  mask = tf.cast(mask, dtype=loss_.dtype)
-  loss_ *= mask
+    mask = tf.cast(mask, dtype=loss_.dtype)
+    loss_ *= mask
 
-  return tf.reduce_mean(loss_)
+    return tf.reduce_mean(loss_)
+
 
 """## Checkpoint"""
 
@@ -439,9 +452,9 @@ ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
 
 start_epoch = 0
 if ckpt_manager.latest_checkpoint:
-  start_epoch = int(ckpt_manager.latest_checkpoint.split('-')[-1])
-  # restoring the latest checkpoint in checkpoint_path
-  ckpt.restore(ckpt_manager.latest_checkpoint)
+    start_epoch = int(ckpt_manager.latest_checkpoint.split('-')[-1])
+    # restoring the latest checkpoint in checkpoint_path
+    ckpt.restore(ckpt_manager.latest_checkpoint)
 
 """## Training
 
@@ -459,39 +472,41 @@ if ckpt_manager.latest_checkpoint:
 # many times, the loss_plot array will be reset
 loss_plot = []
 
+
 @tf.function
 def train_step(img_tensor, target):
-  loss = 0
+    loss = 0
 
-  # initializing the hidden state for each batch
-  # because the captions are not related from image to image
-  hidden = decoder.reset_state(batch_size=target.shape[0])
+    # initializing the hidden state for each batch
+    # because the captions are not related from image to image
+    hidden = decoder.reset_state(batch_size=target.shape[0])
 
-  dec_input = tf.expand_dims([word_to_index('<start>')] * target.shape[0], 1)
+    dec_input = tf.expand_dims([word_to_index('<start>')] * target.shape[0], 1)
 
-  with tf.GradientTape() as tape:
-      features = encoder(img_tensor)
+    with tf.GradientTape() as tape:
+        features = encoder(img_tensor)
 
-      for i in range(1, target.shape[1]):
-          # passing the features through the decoder
-          predictions, hidden, _ = decoder(dec_input, features, hidden)
+        for i in range(1, target.shape[1]):
+            # passing the features through the decoder
+            predictions, hidden, _ = decoder(dec_input, features, hidden)
 
-          loss += loss_function(target[:, i], predictions)
+            loss += loss_function(target[:, i], predictions)
 
-          # using teacher forcing
-          dec_input = tf.expand_dims(target[:, i], 1)
+            # using teacher forcing
+            dec_input = tf.expand_dims(target[:, i], 1)
 
-  total_loss = (loss / int(target.shape[1]))
+    total_loss = (loss / int(target.shape[1]))
 
-  trainable_variables = encoder.trainable_variables + decoder.trainable_variables
+    trainable_variables = encoder.trainable_variables + decoder.trainable_variables
 
-  gradients = tape.gradient(loss, trainable_variables)
+    gradients = tape.gradient(loss, trainable_variables)
 
-  optimizer.apply_gradients(zip(gradients, trainable_variables))
+    optimizer.apply_gradients(zip(gradients, trainable_variables))
 
-  return loss, total_loss
+    return loss, total_loss
 
-EPOCHS = 30
+
+EPOCHS = 25
 
 for epoch in range(start_epoch, EPOCHS):
     start = time.time()
@@ -502,22 +517,23 @@ for epoch in range(start_epoch, EPOCHS):
         total_loss += t_loss
 
         if batch % 100 == 0:
-            average_batch_loss = batch_loss.numpy()/int(target.shape[1])
-            print(f'Epoch {epoch+1} Batch {batch} Loss {average_batch_loss:.4f}')
+            average_batch_loss = batch_loss.numpy() / int(target.shape[1])
+            print(f'Epoch {epoch + 1} Batch {batch} Loss {average_batch_loss:.4f}')
     # storing the epoch end loss value to plot later
     loss_plot.append(total_loss / num_steps)
 
     if epoch % 5 == 0:
-      ckpt_manager.save()
+        ckpt_manager.save()
 
-    print(f'Epoch {epoch+1} Loss {total_loss/num_steps:.6f}')
-    print(f'Time taken for 1 epoch {time.time()-start:.2f} sec\n')
+    print(f'Epoch {epoch + 1} Loss {total_loss / num_steps:.6f}')
+    print(f'Time taken for 1 epoch {time.time() - start:.2f} sec\n')
 
+plt.grid()
 plt.plot(loss_plot)
 plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.title('Loss Plot')
-plt.show()
+plt.savefig('Loss_plot.pdf')
 
 """## Caption!
 
@@ -525,6 +541,7 @@ plt.show()
 * Stop predicting when the model predicts the end token.
 * And store the attention weights for every time step.
 """
+
 
 def evaluate(image):
     attention_plot = np.zeros((max_length, attention_features_shape))
@@ -547,7 +564,7 @@ def evaluate(image):
                                                          features,
                                                          hidden)
 
-        attention_plot[i] = tf.reshape(attention_weights, (-1, )).numpy()
+        attention_plot[i] = tf.reshape(attention_weights, (-1,)).numpy()
 
         predicted_id = tf.random.categorical(predictions, 1)[0][0].numpy()
         predicted_word = tf.compat.as_text(index_to_word(predicted_id).numpy())
@@ -560,6 +577,8 @@ def evaluate(image):
 
     attention_plot = attention_plot[:len(result), :]
     return result, attention_plot
+
+
 def plot_attention(image, result, attention_plot):
     temp_image = np.array(Image.open(image))
 
@@ -568,14 +587,14 @@ def plot_attention(image, result, attention_plot):
     len_result = len(result)
     for i in range(len_result):
         temp_att = np.resize(attention_plot[i], (8, 8))
-        grid_size = max(int(np.ceil(len_result/2)), 2)
-        ax = fig.add_subplot(grid_size, grid_size, i+1)
+        grid_size = max(int(np.ceil(len_result / 2)), 2)
+        ax = fig.add_subplot(grid_size, grid_size, i + 1)
         ax.set_title(result[i])
         img = ax.imshow(temp_image)
         ax.imshow(temp_att, cmap='gray', alpha=0.6, extent=img.get_extent())
 
-    plt.tight_layout()
-    plt.show()
+    # plt.tight_layout()
+    plt.savefig("attention_plot.pdf")
 
 # captions on the validation set
 rid = np.random.randint(0, len(img_name_val))
@@ -586,6 +605,9 @@ result, attention_plot = evaluate(image)
 
 print('Real Caption:', real_caption)
 print('Prediction Caption:', ' '.join(result))
+sentence = ' '.join(result)
+translated_captions = translator.translate(sentence, dest='de')
+print(sentence, ' -> ', translated_captions.text)
 plot_attention(image, result, attention_plot)
 
 """## Try it on your own images
@@ -593,21 +615,11 @@ plot_attention(image, result, attention_plot)
 For fun, below you're provided a method you can use to caption your own images with the model you've just trained. Keep in mind, it was trained on a relatively small amount of data, and your images may be different from the training data (so be prepared for weird results!)
 
 """
-translator = Translator()
-image_url = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/691.jpg'
+image_url = 'https://tensorflow.org/images/surf.jpg'
 image_extension = image_url[-4:]
 image_path = tf.keras.utils.get_file('image'+image_extension, origin=image_url)
 
 result, attention_plot = evaluate(image_path)
-print('Prediction Caption:', ' '.join(result))
 plot_attention(image_path, result, attention_plot)
-sentence = " ".join(result)
-print('Prediction Caption:', ' '.join(result))
-translated_captions = translator.translate(sentence, dest='de')
-print(sentence, ' -> ', translated_captions.text)
 # opening the image
 Image.open(image_path)
-
-
-
-
