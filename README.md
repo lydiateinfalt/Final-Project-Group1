@@ -9,3 +9,9 @@ The model architecture is similar to Show, Attend and Tell: Neural Image Caption
 This notebook is an end-to-end example. When you run the notebook, it downloads the MS-COCO dataset, preprocesses and caches a subset of images using Inception V3, trains an encoder-decoder model, and generates captions on new images using the trained model.
 
 In this example, you will train a model on a relatively small amount of data—the first 30,000 captions for about 20,000 images (because there are multiple captions per image in the dataset).
+
+## Project Depencies
+TensorFlow Text 2.8.* (pip install 'tensorflow-text==2.8.*')
+Google Translate 3.1.0a0 (pip install googletrans==3.1.0a0)
+
+The packages can be installed manually but the image_captioning_vgg16.py does handle the installations automatically using os.system commands.
