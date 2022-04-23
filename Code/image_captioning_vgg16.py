@@ -76,8 +76,8 @@ import json
 from PIL import Image
 import tensorflow_text
 from googletrans import Translator
-# os.system("sudo pip install 'tensorflow-text==2.8.*'")
-# os.system("sudo pip install googletrans==3.1.0a0")
+os.system("sudo pip install 'tensorflow-text==2.8.*'")
+os.system("sudo pip install googletrans==3.1.0a0")
 
 translator = Translator()
 translated_caption = ""
@@ -506,7 +506,7 @@ def train_step(img_tensor, target):
     return loss, total_loss
 
 
-EPOCHS = 25
+EPOCHS = 50
 
 for epoch in range(start_epoch, EPOCHS):
     start = time.time()
@@ -615,11 +615,15 @@ plot_attention(image, result, attention_plot)
 For fun, below you're provided a method you can use to caption your own images with the model you've just trained. Keep in mind, it was trained on a relatively small amount of data, and your images may be different from the training data (so be prepared for weird results!)
 
 """
-image_url = 'https://tensorflow.org/images/surf.jpg'
-image_extension = image_url[-4:]
-image_path = tf.keras.utils.get_file('image'+image_extension, origin=image_url)
+image_url0 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/667.jpg'
+image_url1 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/668.jpg'
+image_url2 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/669.jpg'
+image_list = [image_url0, image_url1, image_url2]
 
-result, attention_plot = evaluate(image_path)
-plot_attention(image_path, result, attention_plot)
-# opening the image
-Image.open(image_path)
+for image_url in image_list:
+    image_extension = image_url[-4:]
+    image_path = tf.keras.utils.get_file('image'+image_extension, origin=image_url)
+    result, attention_plot = evaluate(image_path)
+    plot_attention(image_path, result, attention_plot)
+    # opening the image
+    Image.open(image_path)
