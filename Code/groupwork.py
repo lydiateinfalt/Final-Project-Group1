@@ -14,15 +14,16 @@ from PIL import Image
 
 # Download caption annotation files
 annotation_folder = 'annotations'
+# cache_image_dir = '/home/ubuntu/Deep-Learning/Final-Project-Group1/Code/train2014/'
+#
+# OR_PATH = os.getcwd()
+# os.chdir("..") # Change to the parent directory
+# PATH = os.getcwd()
+# DATA_DIR = os.getcwd() + os.path.sep + annotation_folder + os.path.sep
+# sep = os.path.sep
+# os.chdir(OR_PATH) # Come back to the folder where the code resides , all files will be left on this directory
 
-OR_PATH = os.getcwd()
-os.chdir("..") # Change to the parent directory
-PATH = os.getcwd()
-DATA_DIR = os.getcwd() + os.path.sep + annotation_folder + os.path.sep
-sep = os.path.sep
-os.chdir(OR_PATH) # Come back to the folder where the code resides , all files will be left on this directory
-
-if not os.path.exists(DATA_DIR):
+if not os.path.exists(os.path.abspath('.') + annotation_folder):
     annotation_zip = tf.keras.utils.get_file('captions.zip',
                                              cache_subdir=os.path.abspath('.'),
                                              origin='http://images.cocodataset.org/annotations/annotations_trainval2014.zip',
@@ -178,16 +179,30 @@ features_shape = 2048
 attention_features_shape = 64
 
 # Load the numpy files
-def map_func(img_name, cap):
-    # img_tensor = np.load(img_name.decode('utf-8')+'.npy')
-    image_tensor = np.load(img_name.decode('utf-8'))
-    return img_tensor, cap
+# def map_func(img_name, cap):
+#     img_path = img_name.decode('utf-8') + '.npy'
+#     print(f'img_name = {img_name}')
+#     print(f'img_path = {img_path}')
+#     # img_tensor = np.load(img_name.decode('utf-8') + '.npy')
+#     path_of_feature_file_name = os.path.basename(img_path)
+#     cache_path = os.path.join(cache_image_dir, path_of_feature_file_name)
+#     print(f'cache_path = {cache_path}')
+#     img_tensor = np.load(cache_path)
+#     return img_tensor, cap
 
+# Load the numpy files
+def map_func(img_name, cap):
+  img_tensor = np.load(img_name.decode('utf-8')+'.npy')
+  return img_tensor, cap
 
 dataset = tf.data.Dataset.from_tensor_slices((img_name_train, cap_train))
 
 # Use map to load the numpy files in parallel
-dataset = dataset.map(lambda item1, item2: tf.numpy_function(map_func, [item1, item2], [tf.float32, tf.int64]), num_parallel_calls=tf.data.AUTOTUNE)
+# dataset = dataset.map(lambda item1, item2:  tf.numpy_function(map_func, [item1, item2], [tf.float32, tf.int32]), num_parallel_calls=8)
+dataset = dataset.map(lambda item1, item2: tf.numpy_function(map_func, [item1, item2], [tf.float32, tf.int64]), num_parallel_calls=tf.data.experimental.AUTOTUNE)
+dataset = dataset.map(lambda item1, item2: tf.numpy_function(
+          map_func, [item1, item2], [tf.float32, tf.int64]),
+          num_parallel_calls=tf.data.AUTOTUNE)
 
 # Shuffle and batch
 dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
@@ -375,6 +390,3 @@ plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.title('Loss Plot')
 plt.show()
-
-
-
