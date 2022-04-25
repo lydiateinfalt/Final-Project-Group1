@@ -511,7 +511,7 @@ def train_step(img_tensor, target):
     return loss, total_loss
 
 
-EPOCHS = 65
+EPOCHS = 100
 
 for epoch in range(start_epoch, EPOCHS):
     start = time.time()
@@ -647,8 +647,8 @@ blue3 = blue.corpus_bleu(references, hypotheses, weights=(1/3, 1/3, 1/3,))
 blue4 = blue.corpus_bleu(references, hypotheses)
 
 print(f'blue1 (weights = 1) = {blue1}')
-print(f'blue2 (weights = 0.5) = {blue3}')
-print(f'blue3 (weights = 0.333) = {blue4}')
+print(f'blue2 (weights = 0.5) = {blue2}')
+print(f'blue3 (weights = 0.333) = {blue3}')
 print(f'blue4 = {blue4}')
 
 """## Try it on your own images
