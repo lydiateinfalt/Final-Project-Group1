@@ -9,7 +9,7 @@ The model architecture is similar to Show, Attend and Tell: Neural Image Caption
 ## Project Dependencies
   * TensorFlow Text 2.8.* (pip install 'tensorflow-text==2.8.*')
   * Google Translate 3.1.0a0 (pip install googletrans==3.1.0a0)
-  * NLTK (sudo pip install --user -U nltk)
+  * NLTK (pip install --user -U nltk)
 
 The packages can be installed manually but the image_captioning_vgg16_BLEU.py does handle the installations automatically using os.system commands.
 
