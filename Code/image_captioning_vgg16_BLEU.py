@@ -101,7 +101,7 @@ The code below downloads and extracts the dataset automatically.
 
 # Download caption annotation files
 annotation_folder = '/annotations/'
-if os.path.exists(os.path.abspath('.') + annotation_folder):
+if not os.path.exists(os.path.abspath('.') + annotation_folder):
     annotation_zip = tf.keras.utils.get_file('captions.zip',
                                              cache_subdir=os.path.abspath('.'),
                                              origin='http://images.cocodataset.org/annotations/annotations_trainval2014.zip',
@@ -514,7 +514,7 @@ def train_step(img_tensor, target):
     return loss, total_loss
 
 
-EPOCHS = 100
+EPOCHS = 50
 
 for epoch in range(start_epoch, EPOCHS):
     start = time.time()
