@@ -508,7 +508,7 @@ def train_step(img_tensor, target):
     return loss, total_loss
 
 
-EPOCHS = 45
+EPOCHS = 65
 
 for epoch in range(start_epoch, EPOCHS):
     start = time.time()
