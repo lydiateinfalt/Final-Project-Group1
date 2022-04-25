@@ -81,8 +81,11 @@ os.system("sudo pip install 'tensorflow-text==2.8.*'")
 os.system("sudo pip install googletrans==3.1.0a0")
 os.system("sudo pip install --user -U nltk")
 
+# Google Translator API, specify language output by setting the variable lang to translate the image captions
+# Full list of languages supported available here https://cloud.google.com/translate/docs/languages?msclkid=c1b4b783c49511ec992480e415bfc258
 translator = Translator()
 translated_caption = ""
+lang = 'fr'
 
 """## Download and prepare the MS-COCO dataset
 
@@ -608,7 +611,7 @@ result, attention_plot = evaluate(image)
 print('Real Caption:', real_caption)
 print('Prediction Caption:', ' '.join(result))
 sentence = ' '.join(result)
-translated_captions = translator.translate(sentence, dest='de')
+translated_captions = translator.translate(sentence, dest= lang)
 print(sentence, ' -> ', translated_captions.text)
 plot_attention(image, result, attention_plot)
 
@@ -651,11 +654,11 @@ print(f'blue4 = {blue4}')
 """## Try it on your own images
 
 For fun, below you're provided a method you can use to caption your own images with the model you've just trained. Keep in mind, it was trained on a relatively small amount of data, and your images may be different from the training data (so be prepared for weird results!)
-
+Source for New Yorker cartoon images: https://github.com/nextml/caption-contest-data/tree/gh-pages/cartoons
 """
 image_url0 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/667.jpg'
-image_url1 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/668.jpg'
-image_url2 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/669.jpg'
+image_url1 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/671.jpg'
+image_url2 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/670.jpg'
 image_list = [image_url0, image_url1, image_url2]
 
 for image_url in image_list:
