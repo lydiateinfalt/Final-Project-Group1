@@ -148,15 +148,15 @@ print(train_captions[0])
 Image.open(img_name_vector[0])
 
 # Added this to plot examples from the dataset
-# fig = plt.figure(figsize=(8,8))
-# i = 1
-# for j in range(6):
-#   n = np.random.randint(0, 100)
-#   ax1 = fig.add_subplot(2,3,i)
-#   plt.imshow(Image.open(img_name_vector[n]))
-#   print(train_captions[n])
-#   i += 1
-#   plt.savefig("output/sample_data.pdf")
+fig = plt.figure(figsize=(8,8))
+i = 1
+for j in range(6):
+  n = np.random.randint(0, 100)
+  ax1 = fig.add_subplot(2,3,i)
+  plt.imshow(Image.open(img_name_vector[n]))
+  print(train_captions[n])
+  i += 1
+  plt.savefig("sample_data.pdf")
 
 """## Preprocess the images using InceptionV3
 Next, you will use VGG16 (which is pretrained on Imagenet) to classify each image. You will extract features from the last convolutional layer.
@@ -173,7 +173,7 @@ def load_image(image_path):
     return img, image_path
 
 
-"""## Initialize InceptionV3 and load the pretrained Imagenet weights
+"""## Initialize VGG16 and load the pretrained Imagenet weights
 
 Now you'll create a tf.keras model where the output layer is the last convolutional layer in the InceptionV3 architecture. 
 You use the last convolutional layer because you are using attention in this example. You don't perform this initialization during training because it could become a bottleneck.
@@ -191,7 +191,7 @@ hidden_layer = image_model.layers[-1].output
 image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
 image_features_extract_model.summary()
 
-"""## Caching the features extracte
+"""## Caching the features extracted
 
 You will pre-process each image with VGG16 and cache the output to disk. Caching the output in RAM would be faster but also memory. 
 At the time of writing, this exceeds the memory limitations of Colab (currently 12GB of memory).
@@ -533,7 +533,7 @@ plt.plot(loss_plot)
 plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.title('Loss Plot')
-plt.savefig('Loss_plot.pdf')
+plt.savefig('loss_plot.pdf')
 
 """## Caption!
 
