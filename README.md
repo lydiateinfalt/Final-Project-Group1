@@ -14,4 +14,6 @@ The model architecture is similar to Show, Attend and Tell: Neural Image Caption
 The packages can be installed manually but the image_captioning_vgg16_BLEU.py does handle the installations automatically using os.system commands.
 
 ## Run Project Instructions
-Navigate to Code directory and on a console with Python executables type in the following command "python3 image_captioning_vgg16_BLEU.py". This will class will download images from 2014 COCO dataset, build the model in TensorFlow, train the model using 24000 images and approximately 120,000 corresponding captions in 65 epochs and captions three New Yorker cartoons[https://github.com/nextml/caption-contest-data/tree/gh-pages/cartoons] in English and subsequently translates the caption to German using Google Translate API.
+Navigate to Code directory and on a console with Python executables type in the following command "python3 image_captioning_vgg16_BLEU.py". 
+
+This will class will download images from 2014 COCO dataset, build the model in TensorFlow, train the model using 24000 images and approximately 120,000 corresponding captions in 65 epochs and captions three New Yorker cartoons[https://github.com/nextml/caption-contest-data/tree/gh-pages/cartoons] in English and subsequently translates the caption to German using Google Translate API.
