@@ -1,5 +1,5 @@
 # Final-Project-Group1: Image Captioning Model and Google Translation in TensorFlow
-DATS 6203: Machine Learning 2 Final Group 1 Project at George Washington University (GWU) with Professor Dr. Amir Jafari. Included is the work on the class project with fellow teammates Adel Hassen (adelhassen@gwu.edu) and Xingyu (Alice) Yang (yangxi47@gwu.edu). This code repository is based on a TensorFlow's Image Captioning [tutorial]<https://www.tensorflow.org/tutorials/text/image_captioning?msclkid=568d9785c23711ec9f4b4f0497afd299>
+DATS 6203: Machine Learning 2 Final Group 1 Project at George Washington University (GWU) with Professor Dr. Amir Jafari. Included is the work on the class project with fellow teammates Adel Hassen (adelhassen@gwu.edu) and Xingyu (Alice) Yang (yangxi47@gwu.edu). This code repository is based on a TensorFlow's Image Captioning [tutorial(https://www.tensorflow.org/tutorials/text/image_captioning?msclkid=568d9785c23711ec9f4b4f0497afd299)]
 
 You can find Image Captioning model implemented using TensorFlow in this repo. The model trains on approximately 24000 images from COCO data set from 2014 which is downloadable from link: http://mscoco.org/dataset/#download
 
