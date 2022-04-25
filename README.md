@@ -5,7 +5,7 @@ You can find Image Captioning model implemented using TensorFlow in this repo. T
 
 The model architecture is similar to [Show, Attend and Tell: Neural Image Caption Generation with Visual Attention](https://arxiv.org/pdf/1502.03044.pdf?msclkid=97863852c49311ecb15903abb2f078b2).
 
-Our project uses VGG16 network to pretrain, incorporates BLEU scores to evaluate the mode, and translates the image captions to a second language. 
+Our project uses VGG16 network to pretrain, incorporates BLEU scores to evaluate the model, and translates the image captions to a second language. 
 
 ## Project Dependencies
   * TensorFlow Text 2.8.* (pip install 'tensorflow-text==2.8.*')
