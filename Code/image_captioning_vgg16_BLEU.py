@@ -71,15 +71,18 @@ import collections
 import random
 import numpy as np
 import os
+
+os.system("sudo pip install 'tensorflow-text==2.8.*'")
+os.system("sudo pip install googletrans==3.1.0a0")
+os.system("sudo pip install --user -U nltk")
+
 import time
 import json
 from PIL import Image
 import tensorflow_text
 from googletrans import Translator
 from nltk.translate import bleu_score as blue
-os.system("sudo pip install 'tensorflow-text==2.8.*'")
-os.system("sudo pip install googletrans==3.1.0a0")
-os.system("sudo pip install --user -U nltk")
+
 
 # Google Translator API, specify language output by setting the variable lang to translate the image captions
 # Full list of languages supported available here https://cloud.google.com/translate/docs/languages?msclkid=c1b4b783c49511ec992480e415bfc258
