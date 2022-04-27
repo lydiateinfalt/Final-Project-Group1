@@ -71,24 +71,16 @@ import collections
 import random
 import numpy as np
 import os
-
-os.system("sudo pip install 'tensorflow-text==2.8.*'")
-os.system("sudo pip install googletrans==3.1.0a0")
-os.system("sudo pip install --user -U nltk")
-
 import time
 import json
 from PIL import Image
 import tensorflow_text
 from googletrans import Translator
-from nltk.translate import bleu_score as blue
+os.system("sudo pip install 'tensorflow-text==2.8.*'")
+os.system("sudo pip install googletrans==3.1.0a0")
 
-
-# Google Translator API, specify language output by setting the variable lang to translate the image captions
-# Full list of languages supported available here https://cloud.google.com/translate/docs/languages?msclkid=c1b4b783c49511ec992480e415bfc258
 translator = Translator()
 translated_caption = ""
-lang = 'fr'
 
 """## Download and prepare the MS-COCO dataset
 
@@ -101,12 +93,13 @@ The code below downloads and extracts the dataset automatically.
 
 # Download caption annotation files
 annotation_folder = '/annotations/'
-annotation_zip = tf.keras.utils.get_file('captions.zip',
-                                         cache_subdir=os.path.abspath('.'),
-                                         origin='http://images.cocodataset.org/annotations/annotations_trainval2014.zip',
-                                         extract=True)
-annotation_file = os.path.dirname(annotation_zip) + '/annotations/captions_train2014.json'
-os.remove(annotation_zip)
+if os.path.exists(os.path.abspath('.') + annotation_folder):
+    annotation_zip = tf.keras.utils.get_file('captions.zip',
+                                             cache_subdir=os.path.abspath('.'),
+                                             origin='http://images.cocodataset.org/annotations/annotations_trainval2014.zip',
+                                             extract=True)
+    annotation_file = os.path.dirname(annotation_zip) + '/annotations/captions_train2014.json'
+    os.remove(annotation_zip)
 
 # Download image files
 image_folder = '/train2014/'
@@ -163,8 +156,7 @@ for j in range(6):
   plt.imshow(Image.open(img_name_vector[n]))
   print(train_captions[n])
   i += 1
-plt.savefig('sample.pdf')
-plt.close()
+  plt.savefig("sample_data.pdf")
 
 """## Preprocess the images using InceptionV3
 Next, you will use VGG16 (which is pretrained on Imagenet) to classify each image. You will extract features from the last convolutional layer.
@@ -542,7 +534,6 @@ plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.title('Loss Plot')
 plt.savefig('loss_plot.pdf')
-plt.close()
 
 """## Caption!
 
@@ -603,8 +594,7 @@ def plot_attention(image, result, attention_plot):
         ax.imshow(temp_att, cmap='gray', alpha=0.6, extent=img.get_extent())
 
     # plt.tight_layout()
-    plt.savefig('figure.pdf')
-    plt.close()
+    plt.savefig("attention_plot.pdf")
 
 # captions on the validation set
 rid = np.random.randint(0, len(img_name_val))
@@ -616,54 +606,18 @@ result, attention_plot = evaluate(image)
 print('Real Caption:', real_caption)
 print('Prediction Caption:', ' '.join(result))
 sentence = ' '.join(result)
-translated_captions = translator.translate(sentence, dest= lang)
+translated_captions = translator.translate(sentence, dest='de')
 print(sentence, ' -> ', translated_captions.text)
 plot_attention(image, result, attention_plot)
-
-ref_dict = {}
-
-for i in img_name_val:
-  ref_dict[i] = []
-
-# remove <>
-references = [[] for i in range(len(img_name_val))]
-hypotheses = []
-for j in range(len(img_name_val)):
-    image = img_name_val[j]
-
-    ref_dict[image]
-    real_caption = ' '.join([tf.compat.as_text(index_to_word(i).numpy())
-                             for i in cap_val[j] if i not in [0]])
-    real_caption_split = real_caption.split()
-    ref_dict[image].append(real_caption_split)
-
-for image in ref_dict.keys():
-  result, attention_plot = evaluate(image)
-  hypotheses.append(result)
-
-references = list(map(list, (ref_dict.values())))
-len(references)
-
-len(hypotheses)
-
-blue1 = blue.corpus_bleu(references, hypotheses, weights=(1,))
-blue2 = blue.corpus_bleu(references, hypotheses, weights=(.5,.5))
-blue3 = blue.corpus_bleu(references, hypotheses, weights=(1/3, 1/3, 1/3,))
-blue4 = blue.corpus_bleu(references, hypotheses)
-
-print(f'blue1 (weights = 1) = {blue1}')
-print(f'blue2 (weights = 0.5) = {blue2}')
-print(f'blue3 (weights = 0.333) = {blue3}')
-print(f'blue4 = {blue4}')
 
 """## Try it on your own images
 
 For fun, below you're provided a method you can use to caption your own images with the model you've just trained. Keep in mind, it was trained on a relatively small amount of data, and your images may be different from the training data (so be prepared for weird results!)
-Source for New Yorker cartoon images: https://github.com/nextml/caption-contest-data/tree/gh-pages/cartoons
+
 """
 image_url0 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/667.jpg'
-image_url1 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/671.jpg'
-image_url2 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/670.jpg'
+image_url1 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/668.jpg'
+image_url2 = 'https://raw.githubusercontent.com/nextml/caption-contest-data/gh-pages/cartoons/669.jpg'
 image_list = [image_url0, image_url1, image_url2]
 
 for image_url in image_list:
