@@ -140,7 +140,7 @@ random.shuffle(image_paths)
 # Select the first 10000 image_paths from the shuffled set.
 # Approximately each image id has 5 captions associated with it, so that will
 # lead to 30,000 examples.
-train_image_paths = image_paths[:10000]
+train_image_paths = image_paths[:6000]
 print(len(train_image_paths))
 
 train_captions = []
@@ -163,7 +163,8 @@ for j in range(6):
   plt.imshow(Image.open(img_name_vector[n]))
   print(train_captions[n])
   i += 1
-  plt.savefig("sample_data.pdf")
+plt.savefig('sample.pdf')
+plt.close()
 
 """## Preprocess the images using InceptionV3
 Next, you will use VGG16 (which is pretrained on Imagenet) to classify each image. You will extract features from the last convolutional layer.
@@ -513,7 +514,7 @@ def train_step(img_tensor, target):
     return loss, total_loss
 
 
-EPOCHS = 50
+EPOCHS = 20
 
 for epoch in range(start_epoch, EPOCHS):
     start = time.time()
@@ -541,6 +542,7 @@ plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.title('Loss Plot')
 plt.savefig('loss_plot.pdf')
+plt.close()
 
 """## Caption!
 
@@ -601,7 +603,8 @@ def plot_attention(image, result, attention_plot):
         ax.imshow(temp_att, cmap='gray', alpha=0.6, extent=img.get_extent())
 
     # plt.tight_layout()
-    plt.savefig("attention_plot.pdf")
+    plt.savefig('figure.pdf')
+    plt.close()
 
 # captions on the validation set
 rid = np.random.randint(0, len(img_name_val))
